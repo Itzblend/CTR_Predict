@@ -1,0 +1,90 @@
+---
+title: "ctrPred"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+#### TO DO ####
+# SQLite
+
+
+library(randomForest)
+library(psych)
+library(caret)
+library(data.table)
+library(Matrix)
+#library(tidyverse)
+
+
+
+```
+```{r}
+train <- fread("~/Documents/CTR_Predict/train.csv", verbose = TRUE, nrows = 1000000)
+test <- fread("~/Documents/CTR_Predict/test.csv", verbose = TRUE, nrows = 250000)
+#samplesubmission <- read.csv("~/Documents/CTR_Predict/sampleSubmission.csv")
+
+```
+As for we are predicting click through rate, the value in case is "click"
+```{r}
+str(train)
+length(unique(train$id))
+```
+Datasets
+```{r}
+test$id = NULL
+train$id = NULL
+test$click <- NA
+
+all <- rbind(train, test)
+```
+Missing values
+```{r}
+missattrs <- sapply(all, function(x) sum(x == "" | is.na(x)))
+missattrs # Nice and clean dataset with just obvious missing values
+```
+Classes
+```{r}
+all$click <- as.factor(all$click)
+all$C1 <- as.factor(all$C1)
+all$banner_pos <- as.factor(all$banner_pos)
+all$site_id <- as.factor(all$site_id)
+all$site_domain <- as.factor(all$site_domain)
+all$site_category <- as.factor(all$site_category)
+all$app_id <- as.factor(all$app_id)
+all$app_category <- as.factor(all$app_category)
+all$app_domain <- as.factor(all$app_domain)
+all$device_id <- as.factor(all$device_id)
+all$device_ip <- as.factor(all$device_ip)
+all$device_model <- as.factor(all$device_model)
+all$device_type <- as.factor(all$device_type)
+all$device_conn_type <- as.factor(all$device_conn_type)
+all$C14 <- as.factor(all$C14)
+all$C15 <- as.factor(all$C15)
+all$C16 <- as.factor(all$C16)
+all$C17 <- as.factor(all$C17)
+all$C18 <- as.factor(all$C18)
+all$C19 <- as.factor(all$C19)
+all$C20 <- as.factor(all$C20)
+all$C21 <- as.factor(all$C21)
+str(all)
+```
+Only numerical value is time so we are going to get straight to dummying down factor variables
+```{r}
+all <- as.data.frame(all)
+factor_vars <- names(all[,sapply(all, is.factor)])
+factor_df <- all[,names(all) %in% factor_vars]
+#dummy_df <- as.data.frame(model.matrix(~.-1, factor_df))
+dummy_df <- sparse.model.matrix(~.-1, data = factor_df)
+
+```
+GLM Model
+```{r}
+set.seed(205)
+
+fit <- glm(click~., data = train, family = binomial)
+```
+
